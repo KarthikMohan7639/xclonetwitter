@@ -1,19 +1,19 @@
+import express from 'express';
+import dotenv from 'dotenv';
+import authRoute from "./routes/auth.route.js";
+import connectionDB from './db/connectionDB.js';
 
-const express = require('express');
+
+dotenv.config();
+
 const app = express();
+const PORT = process.env.PORT;
 
+app.use(express.json());
 
+app.use("/api/auth",authRoute)
 
-
-
-
-
-
-app.get("/",(req,res)=>{
-    res.send("Hello makkale!")
-})
-
-
-app.listen(3000,()=>{
-    console.log('app is running on port 3000')
+app.listen(PORT,()=>{
+    console.log(`Server is running on port ${PORT}`);
+    connectionDB();
 });
