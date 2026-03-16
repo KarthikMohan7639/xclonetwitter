@@ -44,7 +44,7 @@ export const signup = async (req, res) => {
                 profileImg : newUser.profileImg,
                 coverImg : newUser.coverImg,
                 bio: newUser.bio,
-                link : newUser.link
+                links : newUser.links
 
             });
         }
@@ -78,7 +78,7 @@ export const login = async (req, res) => {
             profileImg : user.profileImg,
             coverImg : user.coverImg,
             bio: user.bio,
-            link : user.link
+            links : user.links
         });
 
     }

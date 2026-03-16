@@ -1,14 +1,25 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
+import cloudinary from 'cloudinary';
+
+
 import authRoute from "./routes/auth.route.js";
+import userRoute from './routes/user.route.js';
 import connectionDB from './db/connectionDB.js';
 import dns from "node:dns";
-import cookieParser from 'cookie-parser';
-import userRoute from './routes/user.route.js';
+
+
 
 
 dotenv.config();
-
+cloudinary.config(
+    {
+        cloud_name : process.env.CLOUDINARY_CLOUD_NAME,
+        api_key : process.env.CLOUDINARY_API_KEY,
+        api_secret : process.env.CLOUDINARY_API_SECRET_KEY
+    }
+)
 // Use Google DNS to resolve MongoDB Atlas SRV records
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
