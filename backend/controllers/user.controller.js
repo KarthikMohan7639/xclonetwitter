@@ -31,7 +31,9 @@ export const followUnfollowUser = async (req, res) => {
 
 		if (!userToModify || !currentUser) return res.status(400).json({ error: "User not found" });
 
-		const isFollowing = currentUser.following.includes(id);
+		const isFollowing = currentUser.following.some(
+			(followingId) => followingId.toString() === id
+		);
 
 		if (isFollowing) {
 			// Unfollow the user
@@ -76,7 +78,8 @@ export const getSuggestedUsers = async (req, res) => {
 		]);
 
 		// 1,2,3,4,5,6,
-		const filteredUsers = users.filter((user) => !usersFollowedByMe.following.includes(user._id));
+		const followedUserIds = usersFollowedByMe.following.map((followingId) => followingId.toString());
+		const filteredUsers = users.filter((user) => !followedUserIds.includes(user._id.toString()));
 		const suggestedUsers = filteredUsers.slice(0, 4);
 
 		suggestedUsers.forEach((user) => (user.password = null));
