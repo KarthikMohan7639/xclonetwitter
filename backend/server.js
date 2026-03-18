@@ -8,10 +8,12 @@ import authRoutes from "./routes/auth.route.js";
 import userRoutes from "./routes/user.route.js";
 import postRoutes from "./routes/post.route.js";
 import notificationRoutes from "./routes/notification.route.js";
+import cors from "cors";
 
 import connectMongoDB from "./db/connectionDB.js";
 
 dotenv.config();
+const app = express();
 
 cloudinary.config({
 	cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -19,7 +21,12 @@ cloudinary.config({
 	api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const app = express();
+app.use(cors({
+	origin: "http://localhost:5173",
+	credentials: true
+}))
+
+
 const PORT = process.env.PORT || 5000;
 const __dirname = path.resolve();
 
