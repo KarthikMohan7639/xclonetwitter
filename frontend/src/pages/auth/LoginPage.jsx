@@ -7,19 +7,20 @@ import XSvg from "../../components/svgs/X.jsx";
 
 import { MdPassword } from "react-icons/md";
 import { useMutation } from "@tanstack/react-query";
-import { baseUrl } from "../../utils/baseUrl.js";
+import { baseUrl } from "../../constant/url.js";
 import { FaUser } from "react-icons/fa";
 import toast from "react-hot-toast";
 import LoadingSpinner from "../../components/common/LoadingSpinner.jsx";
-
+import { useQueryClient } from "@tanstack/react-query";
 
 const LoginPage = () => {
 	const [formData, setFormData] = useState({
 		username: "",
 		password: "",
 	});
-	const {mutate,isError,isPending} = useMutation({
-		mutationFn: async (username, password) => {
+	const  queryClient = useQueryClient();
+	const { mutate, isError, isPending, error } = useMutation({
+		mutationFn: async ({ username, password }) => {
 			try {
 				const res = await fetch(`${baseUrl}/api/auth/login`, {
 					method: "POST",
@@ -39,6 +40,9 @@ const LoginPage = () => {
 		},
 		onSuccess: () => {
 			toast.success("Login successful");
+			queryClient.invalidateQueries({
+				queryKey: ['authUser']
+			});
 		},
 	});
 
@@ -86,7 +90,7 @@ const LoginPage = () => {
 						/>
 					</label>
 					<button className='btn rounded-full btn-primary text-white'>{isPending ? <LoadingSpinner /> : "Login"}</button>
-					{isError && <p className='text-red-500'>{isError.message}</p>}
+					{isError && <p className='text-red-500'>{error.message}</p>}
 				</form>
 				<div className='flex flex-col gap-2 mt-4'>
 					<p className='text-white text-lg'>{"Don't"} have an account?</p>
