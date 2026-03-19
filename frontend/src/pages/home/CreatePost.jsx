@@ -2,23 +2,55 @@ import { CiImageOn } from "react-icons/ci";
 import { BsEmojiSmileFill } from "react-icons/bs";
 import { useRef, useState } from "react";
 import { IoCloseSharp } from "react-icons/io5";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { baseUrl } from "../../constant/url";
+import { toast } from "react-hot-toast";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 const CreatePost = () => {
 	const [text, setText] = useState("");
 	const [img, setImg] = useState(null);
+	const queryClient = useQueryClient();
 
 	const imgRef = useRef(null);
+	const authUser = queryClient.getQueryData(["authUser"]);
+	const {mutate: CreatePost, isPending, isError, error} = useMutation({
+		mutationFn: async ({text,img}) => {
+			const res = await fetch(`${baseUrl}/api/posts/create`, {
+				method: "POST",
+				credentials: "include",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({text,img}),
+			});
+			const data = await res.json();
+			if (!res.ok) {
+				throw new Error(data.error || "Failed to create post");	
+			}
+			return data;
+		},
+		onSuccess: () => {
+			toast.success("Post created successfully");
+			setText("");
+			setImg(null);
+			if (imgRef.current) {
+				imgRef.current.value = null;
+			}
+			queryClient.invalidateQueries({ queryKey: ["posts"] });
+		}
+	});
 
-	const isPending = false;
-	const isError = false;
+	// const isPending = false;
+	// const isError = false;
 
-	const data = {
-		profileImg: "/avatars/boy1.png",
-	};
+	// const data = {
+	// 	profileImg: "/avatars/boy1.png",
+	// };
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
-		alert("Post created successfully");
+		CreatePost({text,img});
 	};
 
 	const handleImgChange = (e) => {
@@ -36,7 +68,7 @@ const CreatePost = () => {
 		<div className='flex p-4 items-start gap-4 border-b border-gray-700'>
 			<div className='avatar'>
 				<div className='w-8 rounded-full'>
-					<img src={data.profileImg || "/avatar-placeholder.png"} />
+					<img src={authUser?.profileImg || "/avatar-placeholder.png"} />
 				</div>
 			</div>
 			<form className='flex flex-col gap-2 w-full' onSubmit={handleSubmit}>
@@ -69,10 +101,10 @@ const CreatePost = () => {
 					</div>
 					<input type='file' hidden ref={imgRef} onChange={handleImgChange} />
 					<button className='btn btn-primary rounded-full btn-sm text-white px-4'>
-						{isPending ? "Posting..." : "Post"}
+						{isPending ? <LoadingSpinner size="sn" /> : "Post"}
 					</button>
 				</div>
-				{isError && <div className='text-red-500'>Something went wrong</div>}
+				{isError && <div className='text-red-500'>{error.message}</div>}
 			</form>
 		</div>
 	);

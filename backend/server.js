@@ -13,7 +13,9 @@ import cors from "cors";
 import connectMongoDB from "./db/connectionDB.js";
 
 dotenv.config();
-const app = express();
+const app = express(
+	{limit : "5mb"}
+);
 
 cloudinary.config({
 	cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
