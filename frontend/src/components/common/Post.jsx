@@ -1,6 +1,7 @@
 import { FaRegComment } from "react-icons/fa";
 import { BiRepost } from "react-icons/bi";
 import { FaRegHeart } from "react-icons/fa";
+import { FaHeart } from "react-icons/fa";
 import { FaRegBookmark } from "react-icons/fa6";
 import { FaTrash } from "react-icons/fa";
 import { useState } from "react";
@@ -9,6 +10,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { baseUrl } from "../../constant/url";
 import LoadingSpinner from "./LoadingSpinner";
 import { toast } from "react-hot-toast";
+import { formatDate } from "../../utils/data/index";
+
 
 const Post = ({ post }) => {
 	const [comment, setComment] = useState("");
@@ -34,14 +37,84 @@ const Post = ({ post }) => {
 			queryClient.invalidateQueries({ queryKey: ["posts"] });
 		},
 	});
+	const {mutate: likePost, isPending: isLiking} = useMutation(
+		{
+			mutationFn: async () => {
+				const res = await fetch(`${baseUrl}/api/posts/like/${post._id}`, {
+					method: "POST",
+					credentials: "include",
+					headers: {
+						"Content-Type": "application/json",
+					},
+				});
+
+				const contentType = res.headers.get("content-type") || "";
+				const data = contentType.includes("application/json")
+					? await res.json()
+					: { error: await res.text() };
+
+				if (!res.ok) {
+					throw new Error(data.error || "Failed to like post");
+				}
+
+				return data;
+		},
+		onSuccess: (updatedLikes) => {
+			toast.success("Post liked successfully");
+			queryClient.setQueriesData({ queryKey: ["posts"] }, (oldData) => {
+				if (!Array.isArray(oldData)) return oldData;
+
+				return oldData.map((p) =>
+					p._id === post._id ? { ...p, likes: updatedLikes } : p
+				);
+			});
+		},
+		onError: (error) => {
+			toast.error(error.message || "Failed to like post");
+		}
+	 	}
+	);
+	const {mutate: commentPost, isPending: isCommenting} = useMutation({
+		mutationFn: async (commentText) => {
+			const res = await fetch(`${baseUrl}/api/posts/comment/${post._id}`, {
+				method: "POST",
+				credentials: "include",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ text: commentText }),
+			});
+			const data = await res.json();
+			if (!res.ok) {
+				throw new Error(data.error || "Failed to post comment");
+			}
+			return data;
+		},
+		onSuccess: (newComment) => {
+			toast.success("Comment posted successfully");
+			setComment("");
+			queryClient.setQueriesData({ queryKey: ["posts"] }, (oldData) => {
+				if (!Array.isArray(oldData)) return oldData;
+
+				return oldData.map((p) =>
+					p._id === post._id
+						? { ...p, comments: [...p.comments, newComment] }
+						: p
+				);
+			});
+		},
+		onError: (error) => {
+			toast.error(error.message || "Failed to post comment");
+		}	
+	}); 
+
 	const postOwner = post.user;
-	const isLiked = false;
+	const isLiked = post.likes.some((id) => String(id) === String(authUser?._id));
 
 	const isMyPost = authUser?._id === post.user._id;
 
-	const formattedDate = "1h";
+	const formattedDate = formatDate(post.createdAt);
 
-	const isCommenting = false;
 
 	const handleDeletePost = () => {
 		deletePost();
@@ -49,9 +122,14 @@ const Post = ({ post }) => {
 
 	const handlePostComment = (e) => {
 		e.preventDefault();
+		if (!comment.trim()) return;
+		commentPost(comment);
 	};
 
-	const handleLikePost = () => {};
+	const handleLikePost = () => {
+		if(isLiking) return;
+		likePost();
+	};
 
 	return (
 		<>
@@ -147,7 +225,7 @@ const Post = ({ post }) => {
 										/>
 										<button className='btn btn-primary rounded-full btn-sm text-white px-4'>
 											{isCommenting ? (
-												<span className='loading loading-spinner loading-md'></span>
+												<LoadingSpinner size='md' />
 											) : (
 												"Post"
 											)}
@@ -163,14 +241,17 @@ const Post = ({ post }) => {
 								<span className='text-sm text-slate-500 group-hover:text-green-500'>0</span>
 							</div>
 							<div className='flex gap-1 items-center group cursor-pointer' onClick={handleLikePost}>
-								{!isLiked && (
+								{isLiking && <LoadingSpinner size="sm" />}
+								{!isLiked && !isLiking && (
 									<FaRegHeart className='w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-500' />
 								)}
-								{isLiked && <FaRegHeart className='w-4 h-4 cursor-pointer text-pink-500 ' />}
+								{isLiked && !isLiking && (
+									<FaHeart className='w-4 h-4 cursor-pointer text-pink-500 ' />
+								)}
 
 								<span
-									className={`text-sm text-slate-500 group-hover:text-pink-500 ${
-										isLiked ? "text-pink-500" : ""
+									className={`text-sm group-hover:text-pink-500 ${
+										isLiked ? "text-pink-500" : "text-slate-500"
 									}`}
 								>
 									{post.likes.length}
