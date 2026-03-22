@@ -11,7 +11,7 @@ import notificationRoutes from "./routes/notification.route.js";
 import cors from "cors";
 
 import connectMongoDB from "./db/connectionDB.js";
-import path from "path";
+
 
 dotenv.config();
 const app = express(
@@ -47,7 +47,7 @@ app.use("/api/notifications", notificationRoutes);
 if (process.env.NODE_ENV === "production") {
 	app.use(express.static(path.join(__dirname, "/frontend/dist")));
 
-	app.get("*", (req, res) => {
+	app.get(/.*/, (req, res) => {
 		res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
 	});
 }
