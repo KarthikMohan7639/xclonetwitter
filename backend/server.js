@@ -11,11 +11,13 @@ import notificationRoutes from "./routes/notification.route.js";
 import cors from "cors";
 
 import connectMongoDB from "./db/connectionDB.js";
+import path from "path";
 
 dotenv.config();
 const app = express(
 	{limit : "5mb"}
 );
+const __dirname = path.resolve();
 
 cloudinary.config({
 	cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -30,7 +32,6 @@ app.use(cors({
 
 
 const PORT = process.env.PORT || 5000;
-const __dirname = path.resolve();
 
 app.use(express.json({ limit: "5mb" })); // to parse req.body
 // limit shouldn't be too high to prevent DOS
