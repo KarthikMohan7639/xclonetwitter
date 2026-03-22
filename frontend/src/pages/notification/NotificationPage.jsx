@@ -4,32 +4,76 @@ import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { IoSettingsOutline } from "react-icons/io5";
 import { FaUser } from "react-icons/fa";
 import { FaHeart } from "react-icons/fa6";
+import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { baseUrl } from "../../constant/url";
+import { toast } from "react-hot-toast";
 
 const NotificationPage = () => {
-	const isLoading = false;
-	const notifications = [
+	const queryClient = useQueryClient();
+	const{data: notifications, isLoading} = useQuery
+	(
 		{
-			_id: "1",
-			from: {
-				_id: "1",
-				username: "johndoe",
-				profileImg: "/avatars/boy2.png",
-			},
-			type: "follow",
-		},
-		{
-			_id: "2",
-			from: {
-				_id: "2",
-				username: "janedoe",
-				profileImg: "/avatars/girl1.png",
-			},
-			type: "like",
-		},
-	];
+			queryKey: ["notifications"],
+			queryFn: async () => {
+				const res = await fetch(`${baseUrl}/api/notifications`, {
+					method: "GET",
+					credentials: "include",
+					headers: {
+						"Content-Type": "application/json",
+					},
+				});
 
-	const deleteNotifications = () => {
-		alert("All notifications deleted");
+				const contentType = res.headers.get("content-type") || "";
+				const data = contentType.includes("application/json")
+					? await res.json()
+					: { error: await res.text() };
+
+				if (!res.ok) {
+					throw new Error(data.error || "Failed to fetch notifications");
+				}
+
+				return data;
+			},
+		}
+	);
+	const {mutate: deleteNotification, } = useMutation(
+		{
+			mutationFn: async () => 
+			{
+				const res = await fetch(`${baseUrl}/api/notifications`, {
+					method: "DELETE",
+					credentials: "include",
+					headers: {
+						"Content-Type": "application/json",
+					},
+				});
+
+				const contentType = res.headers.get("content-type") || "";
+				const data = contentType.includes("application/json")
+					? await res.json()
+					: { error: await res.text() };
+
+				if (!res.ok) {
+					throw new Error(data.error || "Failed to delete notifications");
+				}
+				return data;
+			},
+			onSuccess: () => {
+				toast.success("All notifications deleted successfully");
+				queryClient.invalidateQueries({ queryKey: ["notifications"] });
+			},
+			onError: (error) => {
+				toast.error(error.message || "Failed to delete notifications");
+			}
+
+		}
+	);
+
+
+	const deleteNotifications = () => 
+	{
+		deleteNotification();
 	};
 
 	return (
