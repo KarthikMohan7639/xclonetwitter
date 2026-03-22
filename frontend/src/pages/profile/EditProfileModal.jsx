@@ -1,19 +1,42 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { useQuery } from "@tanstack/react-query";
+import useUpdateUserProfile from "../../hooks/useUpdateUserProfile";
+
 
 const EditProfileModal = () => {
+
+	const { updateProfile, isUpdatingProfile } = useUpdateUserProfile();
+	const {data: authUser} = useQuery({queryKey: ["authUser"]});
+
+	const handleInputChange = (e) => {
+		setFormData({ ...formData, [e.target.name]: e.target.value });
+	};
+	useEffect(() => {
+		if (authUser) {
+			setFormData({
+				fullName: authUser.fullName || "",
+				username: authUser.username || "",
+				email: authUser.email || "",
+				bio: authUser.bio || "",
+				link: authUser.link || "",
+				currentPassword: "",
+				newPassword: "",
+			});
+		}
+	}, [authUser]);
 	const [formData, setFormData] = useState({
 		fullName: "",
 		username: "",
 		email: "",
 		bio: "",
 		link: "",
-		newPassword: "",
 		currentPassword: "",
+		newPassword: "",
 	});
 
-	const handleInputChange = (e) => {
-		setFormData({ ...formData, [e.target.name]: e.target.value });
-	};
+
+
 
 	return (
 		<>
@@ -30,7 +53,7 @@ const EditProfileModal = () => {
 						className='flex flex-col gap-4'
 						onSubmit={(e) => {
 							e.preventDefault();
-							alert("Profile updated successfully");
+							updateProfile(formData);
 						}}
 					>
 						<div className='flex flex-wrap gap-2'>
@@ -96,7 +119,9 @@ const EditProfileModal = () => {
 							name='link'
 							onChange={handleInputChange}
 						/>
-						<button className='btn btn-primary rounded-full btn-sm text-white'>Update</button>
+						<button className='btn btn-primary rounded-full btn-sm text-white'>
+						{isUpdatingProfile ? <LoadingSpinner size="sm" color="white"/> : "Update"}
+						</button>
 					</form>
 				</div>
 				<form method='dialog' className='modal-backdrop'>

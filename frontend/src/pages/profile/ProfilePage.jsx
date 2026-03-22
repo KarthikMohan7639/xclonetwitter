@@ -18,6 +18,7 @@ import { formatMemberSinceDate } from "../../utils/data";
 import useFollow from "../../hooks/useFollow";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useQueryClient } from "@tanstack/react-query";
+import useUpdateUserProfile from "../../hooks/useUpdateUserProfile";
 
 
 const ProfilePage = () => {
@@ -31,7 +32,7 @@ const ProfilePage = () => {
 
 	const {username} = useParams();
 	const {data: authUser} = useQuery({queryKey:["authUser"]});
-	const queryClient = useQueryClient();
+
 
 
 
@@ -56,37 +57,11 @@ const ProfilePage = () => {
 	useEffect(() => {
 		refetch();
 	}, [username, refetch]);
+
+	const {updateProfile, isUpdatingProfile} = useUpdateUserProfile(
 	
-	const{mutate: updateProfile, isPending: isUpdatingProfile} = useMutation({
-		mutationFn: async () => {
-			const res = await fetch(`${baseUrl}/api/users/update`, {
-				method: "POST",
-				credentials: "include",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					coverImg,
-					profileImg
-				})
-			});
-			
-			const data = await res.json();
-			if (!res.ok) {
-				throw new Error(data.error || "Failed to update profile");
-			}
-			return data;
-		},
-		onSuccess: () => {		
-			toast.success("Profile updated successfully");
-			Promise.all([
-				queryClient.invalidateQueries({queryKey: ["authUser"]}),
-				queryClient.invalidateQueries({queryKey: ["userProfile"]})
-			])
-		}	
-	});
-
-
+	);
+ 
 	const handleImgChange = (e, state) => {
 		const file = e.target.files[0];
 		if (file) {
@@ -182,7 +157,11 @@ const ProfilePage = () => {
 								{(coverImg || profileImg) && (
 									<button
 										className='btn btn-primary rounded-full btn-sm text-white px-4 ml-2'
-										onClick={() => updateProfile()}
+										onClick={async() =>{ await updateProfile({coverImg,profileImg})
+										setCoverImg(null)
+										setProfileImg(null)
+								}
+									}
 									>
 										{isUpdatingProfile ? <LoadingSpinner size="sm" color="white"/> : "Save"}
 										{!isUpdatingProfile && "update"}

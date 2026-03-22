@@ -12,7 +12,7 @@ const Posts = ({ feedType, username, userId }) => {
 			case "following":
 				return `${baseUrl}/api/posts/following`;
 			case "posts":
-				return `${baseUrl}/api/posts/${username}`;
+				return `${baseUrl}/api/posts/user/${username}`;
 			case "likes":
 				return `${baseUrl}/api/posts/likes/${userId}`;
 			default:
